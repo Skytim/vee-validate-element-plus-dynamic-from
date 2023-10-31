@@ -3,21 +3,11 @@
 
   <el-form @submit="onSubmit">
     <div
-      v-for="{ as, name, label, children, ...attrs } in formSchema.fields"
+      v-for="{ as, name, label, children, bind } in formSchema.fields"
       :key="name"
     >
       <label :for="name">{{ label }}</label>
-      <Field :as="as" :id="name" :name="name" v-bind="attrs" v-model="formData[name]">
-        <template v-if="children && children.length">
-          <component
-            v-for="({ tag, text, ...childAttrs }, idx) in children"
-            :key="idx"
-            :is="tag"
-            v-bind="childAttrs"
-          >
-            {{ text }}
-          </component>
-        </template>
+      <Field :as="as" v-bind="bind" >
       </Field>
     </div>
     <br/>
@@ -28,8 +18,26 @@
 </template>
 
 <script setup lang="ts">
-import { Field } from 'vee-validate';
+import { Field,useForm } from 'vee-validate';
 import * as yup from 'yup';
+
+const schema = yup.object({
+  email: yup.string().required().email().label('Email address'),
+});
+
+
+const { defineComponentBinds, handleSubmit, resetForm, errors } = useForm({
+  validationSchema: schema,
+  initialValues: {
+    terms: false,
+  },
+});
+
+const elPlusConfig = (state) => ({
+  props: {
+    validateEvent: false,
+  },
+});
 
 const formSchema = {
   fields: [
@@ -38,6 +46,7 @@ const formSchema = {
       name: 'name',
       as: 'el-input',
       rules: yup.string().required(),
+      bind: defineComponentBinds('name', elPlusConfig)
     },
     // {
     //   label: 'Your Email',
